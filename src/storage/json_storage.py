@@ -65,7 +65,8 @@ class JSONStorage(AbstractStorage):
             "salary_from": vacancy.salary_from,
             "salary_to": vacancy.salary_to,
             "currency": vacancy.currency,
-            "description": vacancy.description
+            "description": vacancy.description,
+            "employer": vacancy.employer
         }
     
     def __dict_to_vacancy(self, data: Dict[str, Any]) -> Vacancy:
@@ -76,7 +77,8 @@ class JSONStorage(AbstractStorage):
             salary_from=data["salary_from"],
             salary_to=data["salary_to"],
             currency=data["currency"],
-            description=data["description"]
+            description=data["description"],
+            employer=data.get("employer", "Unknown")
         )
     
     def __save_vacancies(self, vacancies: List[Vacancy]) -> None:
@@ -92,4 +94,4 @@ class JSONStorage(AbstractStorage):
                 data = json.load(f)
             return [self.__dict_to_vacancy(item) for item in data]
         except (json.JSONDecodeError, FileNotFoundError):
-            return [] 
+            return []
