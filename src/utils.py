@@ -27,11 +27,16 @@ def get_top_vacancies(vacancies: List[Vacancy], limit: int) -> List[Vacancy]:
     
     Args:
         vacancies: List of vacancies to filter
-        limit: Number of top vacancies to return
+        limit: Non-negative number of top vacancies to return
         
     Returns:
-        List of top N vacancies
+        List of top N vacancies without modifying the input list
+
+    Raises:
+        ValueError: If limit is negative
     """
+    if limit < 0:
+        raise ValueError("Limit must be non-negative")
     return sorted(vacancies, reverse=True)[:limit]
 
 def parse_salary_range(salary_range: str) -> tuple[int, int]:

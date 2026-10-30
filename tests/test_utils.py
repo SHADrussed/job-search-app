@@ -35,19 +35,42 @@ def test_filter_vacancies(sample_vacancies):
     assert len(filtered) == len(sample_vacancies)
 
 def test_get_top_vacancies(sample_vacancies):
+    original = sample_vacancies.copy()
+
     # Test getting top 2
     top = get_top_vacancies(sample_vacancies, 2)
     assert len(top) == 2
     assert top[0].title == "Python Senior"  # Highest salary
     assert top[1].title == "Java Dev"  # Second highest
+    assert sample_vacancies == original
     
     # Test getting more than available
     top = get_top_vacancies(sample_vacancies, 5)
     assert len(top) == 3
+    assert top == [original[2], original[1], original[0]]
+    assert sample_vacancies == original
     
     # Test getting none
     top = get_top_vacancies(sample_vacancies, 0)
     assert len(top) == 0
+    assert sample_vacancies == original
+
+
+@pytest.mark.parametrize("limit", [-1, -100])
+@pytest.mark.parametrize("empty", [False, True])
+def test_get_top_vacancies_rejects_negative_limit(sample_vacancies, limit, empty):
+    vacancies = [] if empty else sample_vacancies
+    original = vacancies.copy()
+
+    with pytest.raises(ValueError, match="Limit must be non-negative"):
+        get_top_vacancies(vacancies, limit)
+
+    assert vacancies == original
+
+
+@pytest.mark.parametrize("limit", [0, 1, 5])
+def test_get_top_vacancies_empty_input(limit):
+    assert get_top_vacancies([], limit) == []
 
 def test_parse_salary_range():
     # Test valid range
