@@ -75,4 +75,56 @@ def test_file_persistence(temp_json_file, sample_vacancy):
     vacancies = storage2.get_vacancies()
     
     assert len(vacancies) == 1
-    assert vacancies[0].title == sample_vacancy.title 
+    assert vacancies[0].title == sample_vacancy.title
+
+
+@pytest.mark.parametrize("employer", ["Example Company", "ООО «Ромашка» 東京"])
+def test_employer_persistence(temp_json_file, employer):
+    vacancy = Vacancy("Python Dev", "url1", 1000, 2000, "RUR", "Python", employer)
+    storage = JSONStorage(temp_json_file)
+    storage.add_vacancy(vacancy)
+
+    with open(temp_json_file, encoding="utf-8") as file:
+        saved = json.load(file)
+    assert saved == [{field: getattr(vacancy, field) for field in Vacancy.__slots__}]
+
+    restored = JSONStorage(temp_json_file).get_vacancies()
+    assert len(restored) == 1
+    for field in Vacancy.__slots__:
+        assert getattr(restored[0], field) == getattr(vacancy, field)
+
+
+def test_legacy_storage_remains_usable_with_new_records(temp_json_file):
+    legacy_record = {
+        "title": "Legacy Python Dev",
+        "url": "legacy-url",
+        "salary_from": 1000,
+        "salary_to": 2000,
+        "currency": "RUR",
+        "description": "Python, Django",
+    }
+    with open(temp_json_file, "w", encoding="utf-8") as file:
+        json.dump([legacy_record], file)
+
+    storage = JSONStorage(temp_json_file)
+    legacy_vacancy = storage.get_vacancies()[0]
+    assert legacy_vacancy.employer == "Unknown"
+    for field, value in legacy_record.items():
+        assert getattr(legacy_vacancy, field) == value
+    with open(temp_json_file, encoding="utf-8") as file:
+        assert json.load(file) == [legacy_record]
+
+    new_vacancy = Vacancy("New Python Dev", "new-url", 2000, 3000, "RUR", "Python", "New Company")
+    storage.add_vacancy(new_vacancy)
+    storage.add_vacancy(new_vacancy)
+    restored = JSONStorage(temp_json_file).get_vacancies(keyword="Python")
+    assert [(vacancy.url, vacancy.employer) for vacancy in restored] == [
+        ("legacy-url", "Unknown"),
+        ("new-url", "New Company"),
+    ]
+
+    storage.delete_vacancy(legacy_vacancy)
+    remaining = JSONStorage(temp_json_file).get_vacancies()
+    assert [(vacancy.url, vacancy.employer) for vacancy in remaining] == [
+        ("new-url", "New Company"),
+    ]
