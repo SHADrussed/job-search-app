@@ -2,13 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Python 3.9 builds are available on Ubuntu 24.04, not 26.04.
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
@@ -23,7 +24,8 @@ jobs:
     
     - name: Install Poetry
       run: |
-        curl -sSL https://install.python-poetry.org | python3 -
+        # Match the lockfile generator and retain Python 3.9 support.
+        curl -sSL https://install.python-poetry.org | python3 - --version 2.1.2
     
     - name: Install dependencies
       run: poetry install
@@ -33,4 +35,4 @@ jobs:
     
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
-      if: matrix.python-version == '3.11' 
+      if: matrix.python-version == '3.11'
